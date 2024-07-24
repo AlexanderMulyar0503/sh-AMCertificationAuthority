@@ -1,3 +1,16 @@
 #!/bin/bash
 
 echo "AMCertificationAuthority"
+
+if [ ! -e ca.key ]; then
+    echo "Создание приватного ключа сервера"
+    openssl genrsa -out ca.key 4096
+
+    echo "Создание сертификата сервера"
+    openssl req -x509 -days 1825 -key ca.key -out ca.crt
+fi
+
+if [ ! -e ca.crt ]; then
+    echo "Создание сертификата сервера"
+    openssl req -x509 -days 1825 -key ca.key -out ca.crt
+fi
