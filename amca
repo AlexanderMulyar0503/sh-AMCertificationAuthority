@@ -14,3 +14,27 @@ if [ ! -e ca.crt ]; then
     echo "Создание сертификата сервера"
     openssl req -x509 -days 1825 -key ca.key -out ca.crt
 fi
+
+if [ -z "$1" ]; then
+    echo "    -n [domain], --new [domain]       Создание сертификата для домена"
+    echo "    -u [domain], --update [domain]    Переиздание сертификата для домена"
+    echo "    -h, --help                        Вывод справки"
+fi
+
+while [ -n "$1" ]
+do
+    case "$1" in
+    -h | --help)
+        echo "    -n [domain], --new [domain]       Создание сертификата для домена"
+        echo "    -u [domain], --update [domain]    Переиздание сертификата для домена"
+        echo "    -h, --help                        Вывод справки"
+    ;;
+
+    *)
+        echo "Неизвестная опция"
+    ;;
+
+    esac
+
+    shift
+done
