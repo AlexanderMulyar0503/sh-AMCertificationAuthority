@@ -22,6 +22,11 @@ fi
 if [ -z "$1" ]; then
     echo "    -n [domain], --new [domain]       Создание сертификата для домена"
     echo "    -u [domain], --update [domain]    Переиздание сертификата для домена"
+    echo "    --viewKey [domain]                Просмотр приватного ключа"
+    echo "    --viewCsr [domain]                Просмотр запроса на подпись"
+    echo "    --viewCrt [domain]                Просмотр сертификата"
+    echo "    -l, --list                        Вывод списка доменов"
+    echo "    -s, --serial                      Вывод серийных номеров"
     echo "    -h, --help                        Вывод справки"
 fi
 
@@ -144,9 +149,76 @@ do
         shift
     ;;
 
+    --viewKey)
+        if [ -n "$2" ]; then
+            if [ ! ${2:0:1} == "-" ]; then
+                if [ -e ./domains/$2/$2.key ]; then
+                    openssl rsa -noout -text -in ./domains/$2/$2.key | less
+                else
+                    echo "Приватный ключ не найден."
+                fi
+            else
+                echo "Ожидалось имя домена"
+            fi
+        else
+            echo "Ожидалось имя домена"
+        fi
+
+        shift
+    ;;
+
+    --viewCsr)
+        if [ -n "$2" ]; then
+            if [ ! ${2:0:1} == "-" ]; then
+                if [ -e ./domains/$2/$2.csr ]; then
+                    openssl req -noout -text -in ./domains/$2/$2.csr | less
+                else
+                    echo "Запрос на подпись не найден."
+                fi
+            else
+                echo "Ожидалось имя домена"
+            fi
+        else
+            echo "Ожидалось имя домена"
+        fi
+
+        shift
+    ;;
+
+    --viewCrt)
+        if [ -n "$2" ]; then
+            if [ ! ${2:0:1} == "-" ]; then
+                if [ -e ./domains/$2/$2.crt ]; then
+                    openssl x509 -noout -text -in ./domains/$2/$2.crt | less
+                else
+                    echo "Сертификат не найден."
+                fi
+            else
+                echo "Ожидалось имя домена"
+            fi
+        else
+            echo "Ожидалось имя домена"
+        fi
+
+        shift
+    ;;
+
+    -l | --list)
+        ls -l ./domains
+    ;;
+
+    -s | --serial)
+        cat serialNumbers
+    ;;
+
     -h | --help)
         echo "    -n [domain], --new [domain]       Создание сертификата для домена"
         echo "    -u [domain], --update [domain]    Переиздание сертификата для домена"
+        echo "    --viewKey [domain]                Просмотр приватного ключа"
+        echo "    --viewCsr [domain]                Просмотр запроса на подпись"
+        echo "    --viewCrt [domain]                Просмотр сертификата"
+        echo "    -l, --list                        Вывод списка доменов"
+        echo "    -s, --serial                      Вывод серийных номеров"
         echo "    -h, --help                        Вывод справки"
     ;;
 
