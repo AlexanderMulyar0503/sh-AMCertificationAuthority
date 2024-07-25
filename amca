@@ -15,6 +15,10 @@ if [ ! -e ca.crt ]; then
     openssl req -x509 -days 1825 -key ca.key -out ca.crt
 fi
 
+if [ ! -d ./domains ]; then
+    mkdir ./domains
+fi
+
 if [ -z "$1" ]; then
     echo "    -n [domain], --new [domain]       Создание сертификата для домена"
     echo "    -u [domain], --update [domain]    Переиздание сертификата для домена"
@@ -24,6 +28,122 @@ fi
 while [ -n "$1" ]
 do
     case "$1" in
+    -n | --new)
+        if [ -n "$2" ]; then
+            if [ ! ${2:0:1} == "-" ]; then
+                if [ ! -e ./domains/$2/$2.key ]; then
+
+                    if [ ! -d ./domains/$2 ]; then
+                        mkdir ./domains/$2
+                    fi
+
+                    echo "Создание приватного ключа"
+                    openssl genrsa -out ./domains/$2/$2.key 4096
+
+                    echo "Создание конфигурации"
+                    if [ -e ./domains/$2/ssl-csr.cnf ]; then
+                        rm ./domains/$2/ssl-csr.cnf
+                    fi
+                    echo "[ req ]" >> ./domains/$2/ssl-csr.cnf
+                    echo "default_bits = 4096" >> ./domains/$2/ssl-csr.cnf
+                    echo "distinguished_name  = req_distinguished_name" >> ./domains/$2/ssl-csr.cnf
+                    echo "req_extensions     = req_ext" >> ./domains/$2/ssl-csr.cnf
+                    echo "" >> ./domains/$2/ssl-csr.cnf
+                    echo "[ req_distinguished_name ]" >> ./domains/$2/ssl-csr.cnf
+                    echo "countryName                  = Country Name (2 letter code)" >> ./domains/$2/ssl-csr.cnf
+                    echo "countryName_default          = RU" >> ./domains/$2/ssl-csr.cnf
+                    echo "stateOrProvinceName          = State or Province Name (full name)" >> ./domains/$2/ssl-csr.cnf
+                    echo "stateOrProvinceName_default  = Russia" >> ./domains/$2/ssl-csr.cnf
+                    echo "localityName                 = Locality Name (eg, city)" >> ./domains/$2/ssl-csr.cnf
+                    echo "localityName_default         = Moscow" >> ./domains/$2/ssl-csr.cnf
+                    echo "organizationName             = Organization Name (eg, company)" >> ./domains/$2/ssl-csr.cnf
+                    echo "organizationName_default     = Company" >> ./domains/$2/ssl-csr.cnf
+                    echo "commonName                   = Common Name (eg, YOUR name or FQDN)" >> ./domains/$2/ssl-csr.cnf
+                    echo "commonName_max               = 64" >> ./domains/$2/ssl-csr.cnf
+                    echo "" >> ./domains/$2/ssl-csr.cnf
+                    echo "[ req_ext ]" >> ./domains/$2/ssl-csr.cnf
+                    echo "basicConstraints = CA:FALSE" >> ./domains/$2/ssl-csr.cnf
+                    echo "keyUsage = nonRepudiation, digitalSignature, keyEncipherment" >> ./domains/$2/ssl-csr.cnf
+                    echo "" >> ./domains/$2/ssl-csr.cnf
+                    echo "subjectAltName          = DNS:$2" >> ./domains/$2/ssl-csr.cnf
+
+                    echo "Создание запроса подписи сертификата"
+                    openssl req -new -key ./domains/$2/$2.key -config ./domains/$2/ssl-csr.cnf -reqexts req_ext -out ./domains/$2/$2.csr
+
+                    echo "Подпись сертификата"
+                    echo "Введите серийный номер сертификата:"
+                    read serialNum
+                    echo "$serialNum - $2" >> serialNumbers
+                    openssl x509 -req -days 1825 -CA ca.crt -CAkey ca.key -set_serial $serialNum -extfile ./domains/$2/ssl-csr.cnf -extensions req_ext -in ./domains/$2/$2.csr -out ./domains/$2/$2.crt
+
+                    echo "Сертификат подписан. Путь к файлу: ./domains/$2/$2.crt"
+                else
+                    echo "Приватный ключ уже создан. Используйте опцию -u."
+                fi
+            else
+                echo "Ожидалось имя домена"
+            fi
+        else
+            echo "Ожидалось имя домена"
+        fi
+
+        shift
+    ;;
+
+    -u | --update)
+        if [ -n "$2" ]; then
+            if [ ! ${2:0:1} == "-" ]; then
+                if [ -e ./domains/$2/$2.key ]; then
+                    echo "Создание конфигурации"
+                    if [ -e ./domains/$2/ssl-csr.cnf ]; then
+                        rm ./domains/$2/ssl-csr.cnf
+                    fi
+                    echo "[ req ]" >> ./domains/$2/ssl-csr.cnf
+                    echo "default_bits = 4096" >> ./domains/$2/ssl-csr.cnf
+                    echo "distinguished_name  = req_distinguished_name" >> ./domains/$2/ssl-csr.cnf
+                    echo "req_extensions     = req_ext" >> ./domains/$2/ssl-csr.cnf
+                    echo "" >> ./domains/$2/ssl-csr.cnf
+                    echo "[ req_distinguished_name ]" >> ./domains/$2/ssl-csr.cnf
+                    echo "countryName                  = Country Name (2 letter code)" >> ./domains/$2/ssl-csr.cnf
+                    echo "countryName_default          = RU" >> ./domains/$2/ssl-csr.cnf
+                    echo "stateOrProvinceName          = State or Province Name (full name)" >> ./domains/$2/ssl-csr.cnf
+                    echo "stateOrProvinceName_default  = Russia" >> ./domains/$2/ssl-csr.cnf
+                    echo "localityName                 = Locality Name (eg, city)" >> ./domains/$2/ssl-csr.cnf
+                    echo "localityName_default         = Moscow" >> ./domains/$2/ssl-csr.cnf
+                    echo "organizationName             = Organization Name (eg, company)" >> ./domains/$2/ssl-csr.cnf
+                    echo "organizationName_default     = Company" >> ./domains/$2/ssl-csr.cnf
+                    echo "commonName                   = Common Name (eg, YOUR name or FQDN)" >> ./domains/$2/ssl-csr.cnf
+                    echo "commonName_max               = 64" >> ./domains/$2/ssl-csr.cnf
+                    echo "" >> ./domains/$2/ssl-csr.cnf
+                    echo "[ req_ext ]" >> ./domains/$2/ssl-csr.cnf
+                    echo "basicConstraints = CA:FALSE" >> ./domains/$2/ssl-csr.cnf
+                    echo "keyUsage = nonRepudiation, digitalSignature, keyEncipherment" >> ./domains/$2/ssl-csr.cnf
+                    echo "" >> ./domains/$2/ssl-csr.cnf
+                    echo "subjectAltName          = DNS:$2" >> ./domains/$2/ssl-csr.cnf
+
+                    echo "Создание запроса подписи сертификата"
+                    openssl req -new -key ./domains/$2/$2.key -config ./domains/$2/ssl-csr.cnf -reqexts req_ext -out ./domains/$2/$2.csr
+
+                    echo "Подпись сертификата"
+                    echo "Введите серийный номер сертификата:"
+                    read serialNum
+                    echo "$serialNum - $2" >> serialNumbers
+                    openssl x509 -req -days 1825 -CA ca.crt -CAkey ca.key -set_serial $serialNum -extfile ./domains/$2/ssl-csr.cnf -extensions req_ext -in ./domains/$2/$2.csr -out ./domains/$2/$2.crt
+
+                    echo "Сертификат подписан. Путь к файлу: ./domains/$2/$2.crt"
+                else
+                    echo "Приватный ключ не создан. Используйте опцию -n."
+                fi
+            else
+                echo "Ожидалось имя домена"
+            fi
+        else
+            echo "Ожидалось имя домена"
+        fi
+
+        shift
+    ;;
+
     -h | --help)
         echo "    -n [domain], --new [domain]       Создание сертификата для домена"
         echo "    -u [domain], --update [domain]    Переиздание сертификата для домена"
