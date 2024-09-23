@@ -1,6 +1,7 @@
 #!/bin/bash
 
 echo "AMCertificationAuthority"
+echo "-------"
 
 if [ ! -e ca.key ]; then
     echo "Создание приватного ключа сервера"
@@ -204,7 +205,12 @@ do
     ;;
 
     -l | --list)
-        ls -l ./domains
+        domains=./domains/
+        for domain in "$domains"*
+        do
+            size=${#domains}
+            echo "${domain:$size}"
+        done
     ;;
 
     -s | --serial)
